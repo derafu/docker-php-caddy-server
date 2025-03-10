@@ -1,0 +1,45 @@
+#
+# Docker Compose file for the Derafu Sites Server.
+#
+# This file is used to configure the docker container for the Derafu Sites Server.
+#
+
+# Name of the docker container.
+name: ${SERVER_NAME:-derafu-sites-server}
+
+# Services.
+services:
+
+  # Webserver container.
+  webserver:
+
+    # Build the container from the Dockerfile.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ADMIN_USER: ${ADMIN_USER:-admin}
+        ADMIN_GROUP: ${ADMIN_GROUP:-admin}
+        WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
+
+    # Name of the container.
+    container_name: ${SERVER_NAME:-derafu-sites-server}-php-caddy
+
+    # Environment variables.
+    environment:
+      CADDY_DEBUG: ${CADDY_DEBUG:-}
+      CADDY_EMAIL: ${CADDY_EMAIL:-admin@example.com}
+      CADDY_LOG_SIZE: ${CADDY_LOG_SIZE:-100mb}
+      CADDY_LOG_KEEP: ${CADDY_LOG_KEEP:-5}
+      CADDY_LOG_KEEP_DAYS: ${CADDY_LOG_KEEP_DAYS:-14}
+      CADDY_HTTPS_ISSUER: ${CADDY_HTTPS_ISSUER:-internal}
+      WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
+
+    # Restart the container unless stopped.
+    restart: unless-stopped
+
+    # Ports mapping to the host.
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+      - "${SSH_PORT:-2222}:22"

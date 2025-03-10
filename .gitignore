@@ -1,0 +1,3 @@
+sites/
+config/ssh/authorized_keys
+.env

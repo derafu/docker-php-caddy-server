@@ -1,0 +1,18 @@
+#
+# Docker Compose override file for development environment.
+#
+
+# Services.
+services:
+
+  # Webserver container.
+  webserver:
+
+    # Ports mapping to the host.
+    ports:
+      - "${MANAGER_PORT:-9123}:9123"  # Manager port for development and testing.
+
+    # Volumes.
+    volumes:
+      - ${VOLUME_SITES:-./sites}:${WWW_ROOT_PATH:-/var/www/sites}
+      - ${VOLUME_CADDY:-./config/caddy}:/etc/caddy

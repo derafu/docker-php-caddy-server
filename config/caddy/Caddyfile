@@ -1,0 +1,128 @@
+#
+# Caddyfile for the Caddy web server.
+#
+# This file is used to configure the Caddy web server.
+#
+
+# Global configuration.
+{
+    {$CADDY_DEBUG}
+    email {$CADDY_EMAIL}
+
+    on_demand_tls {
+		ask http://localhost:9123/ask
+	}
+}
+
+#
+# Normalize the domain to the real domain.
+#
+# The process is as follows:
+#
+#   1. The domain is mapped to the non-local domain.
+#   2. The non-local domain is mapped to the real domain.
+#   3. The real domain is checked if it exists as a directory in the {$WWW_ROOT_PATH}.
+#   4. If the real domain exists, the endpoint will return a 200 status.
+#   5. Otherwise, it will return a 404 status.
+#
+(normalize_domain) {
+    # Remove the .local extension from the domain if exists.
+    map     {query.domain}          {non_local_domain} {
+            ~(.*)\.local$           "${1}"
+            default                 "{query.domain}"
+    }
+
+    # Add www to the domain if it doesn't exist and the domain is a second level
+    # domain.
+    map     {non_local_domain}      {real_domain} {
+            ~^(www\..+)$            "${1}"
+            ~^([^.]+\.[^.]+)$       "www.${1}"
+            default                 "{non_local_domain}"
+    }
+}
+
+# HTTP - redirect everything to HTTPS.
+:80 {
+    # Add basic logging.
+    log {
+        output file /var/log/caddy/http_redirect.log {
+            roll_size 10mb
+            roll_keep 3
+            roll_keep_days 7
+        }
+    }
+
+    # Redirect all HTTP traffic to HTTPS.
+    redir https://{host}{uri} permanent
+}
+
+# HTTPS - handle all actual processing.
+:443 {
+    # Add main logging.
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size {$CADDY_LOG_SIZE}
+            roll_keep {$CADDY_LOG_KEEP}
+            roll_keep_days {$CADDY_LOG_KEEP_DAYS}
+        }
+    }
+
+    # TLS configuration at site level.
+    tls {
+        issuer {$CADDY_HTTPS_ISSUER}
+        on_demand
+    }
+
+    # Redirect non-www to www for main domains.
+    @non_www vars_regexp non_www {host} ^([^.]+)\.([^.]+)(\.local)?$
+    handle @non_www {
+        redir http://www.{re.non_www.1}.{re.non_www.2}{uri} permanent
+    }
+
+    # Local development domains (.local).
+    @local_domain vars_regexp local_domain {host} ^(.+)\.local$
+    handle @local_domain {
+        root * {$WWW_ROOT_PATH}/{re.local_domain.1}/public
+        file_server
+        php_fastcgi 127.0.0.1:9000 {
+            env PHP_ENV development
+        }
+    }
+
+    # Production domains.
+    @production {
+        not host *.local
+    }
+    handle @production {
+        root * {$WWW_ROOT_PATH}/{host}/public
+        file_server
+        php_fastcgi 127.0.0.1:9000
+    }
+}
+
+#
+# On-demand TLS endpoint.
+#
+# This endpoint is used to check if a domain is available for TLS.
+# It will return a 200 status if the domain is available, otherwise it will
+# return a 404 status.
+#
+:9123 {
+    root * {$WWW_ROOT_PATH}
+
+    # Normalize the domain to the real domain.
+    import normalize_domain
+
+    # Check if the real domain exists as a directory in the {$WWW_ROOT_PATH}.
+    @valid_domain <<CEL
+        file({'try_files': [{real_domain} + '/']})
+    CEL
+
+    # If the real domain exists, return a 200 status.
+    handle @valid_domain {
+        respond "Domain {real_domain} is available." 200
+    }
+
+    # Default response.
+    respond "Domain {real_domain} is not available." 404
+}
