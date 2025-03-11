@@ -1,5 +1,9 @@
 # Derafu Sites Server - Docker with PHP and Caddy for Deployer
 
+![GitHub last commit](https://img.shields.io/github/last-commit/derafu/docker-php-caddy-server/main)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/derafu/docker-php-caddy-server)
+![GitHub Issues](https://img.shields.io/github/issues-raw/derafu/docker-php-caddy-server)
+
 A modern Docker setup for hosting PHP websites with Caddy web server and SSH access for Deployer deployments.
 
 ## Features
