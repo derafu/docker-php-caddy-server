@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     lsb-release \
+    nodejs \
+    npm \
     openssh-server \
     rsync \
     screen \
@@ -38,6 +40,9 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+
+# Install D2 CLI.
+RUN curl -fsSL https://d2lang.com/install.sh | sh -s -- --prefix /usr/local
 
 # Install Caddy.
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
