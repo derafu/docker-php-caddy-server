@@ -234,7 +234,7 @@ If you're having issues with SSL certificates in development:
 If you encounter permission issues:
 
 ```bash
-docker exec -it derafu-sites-server-php-caddy chown -R admin:admin /var/www/sites
+docker exec -it derafu-sites-server-php-caddy chown -R admin:www-data /var/www/sites
 ```
 
 ### Logs Location
