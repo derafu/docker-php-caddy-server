@@ -2,8 +2,8 @@
 FROM php:8.3-fpm
 
 # Environment variables.
-ARG ADMIN_USER=admin
-ARG ADMIN_GROUP=admin
+ARG WWW_USER=admin
+ARG WWW_GROUP=www-data
 ARG WWW_ROOT_PATH=/var/www/sites
 
 # Install basic dependencies.
@@ -93,23 +93,23 @@ RUN mkdir -p /var/run/sshd
 COPY config/ssh/sshd_config /etc/ssh/sshd_config
 
 # Create admin user for SSH access.
-RUN useradd -m -d /home/${ADMIN_USER} -s /bin/bash ${ADMIN_USER} \
-    && usermod -p '*' ${ADMIN_USER} \
-    && echo "${ADMIN_USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers \
+RUN useradd -m -d /home/${WWW_USER} -s /bin/bash ${WWW_USER} \
+    && usermod -p '*' ${WWW_USER} \
+    && echo "${WWW_USER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
     && chmod 0440 /etc/sudoers \
     && chmod g+w /etc/passwd \
-    && mkdir -p /home/${ADMIN_USER}/.ssh \
-    && chmod 700 /home/${ADMIN_USER}/.ssh
+    && mkdir -p /home/${WWW_USER}/.ssh \
+    && chmod 700 /home/${WWW_USER}/.ssh
 
 # Copy authorized keys for admin user.
-COPY config/ssh/authorized_keys /home/${ADMIN_USER}/.ssh/authorized_keys
-RUN chmod 600 /home/${ADMIN_USER}/.ssh/authorized_keys \
-    && chown -R ${ADMIN_USER}:${ADMIN_USER} /home/${ADMIN_USER}/.ssh
+COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
+RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
+    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh
 
 # Create necessary directories for web content and give admin user access.
 RUN mkdir -p ${WWW_ROOT_PATH} \
-    && chown -R ${ADMIN_USER}:${ADMIN_GROUP} ${WWW_ROOT_PATH} \
-    && chmod 770 ${WWW_ROOT_PATH}
+    && chown -R ${WWW_USER}:${WWW_GROUP} ${WWW_ROOT_PATH} \
+    && chmod 770 ${WWW_ROOT_PATH} -R
 
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

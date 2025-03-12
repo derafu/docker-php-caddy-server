@@ -15,7 +15,7 @@
 }
 
 #
-# Normalize the domain to the real domain.
+# Normalize the domain, in the $_GET['domain'] variable, to the real domain.
 #
 # The process is as follows:
 #
@@ -83,8 +83,8 @@
     @local_domain vars_regexp local_domain {host} ^(.+)\.local$
     handle @local_domain {
         root * {$WWW_ROOT_PATH}/{re.local_domain.1}/public
-        file_server
         php_fastcgi 127.0.0.1:9000 {
+            resolve_root_symlink
             env PHP_ENV development
         }
     }
@@ -94,10 +94,16 @@
         not host *.local
     }
     handle @production {
-        root * {$WWW_ROOT_PATH}/{host}/public
-        file_server
-        php_fastcgi 127.0.0.1:9000
+        root * {$WWW_ROOT_PATH}/{host}/current
+        php_fastcgi 127.0.0.1:9000 {
+            try_files public/index.php
+            resolve_root_symlink
+            env PHP_ENV production
+        }
     }
+
+    # Default response.
+    respond "Domain {host} is not available." 404
 }
 
 #

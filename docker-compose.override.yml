@@ -14,5 +14,4 @@ services:
 
     # Volumes.
     volumes:
-      - ${VOLUME_SITES:-./sites}:${WWW_ROOT_PATH:-/var/www/sites}
       - ${VOLUME_CADDY:-./config/caddy}:/etc/caddy
