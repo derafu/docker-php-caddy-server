@@ -1,0 +1,46 @@
+# Environment variables.
+export SITES_DIR=$HOME/sites
+export DEPLOYER_DIR=$HOME/deployer
+
+# Usefull aliases.
+alias ll='ls -lah'
+alias ..='cd ..'
+alias site='cd $SITES_DIR/$1'
+alias site-dependencies='composer install && npm install'
+alias site-build='npm run build'
+alias site-check='composer phpcs && composer phpstan && composer tests'
+alias site-status='git status'
+alias site-update='git pull && site-dependencies && site-build'
+alias site-send='git add . && git commit -m "$1" && git push'
+alias site-deploy='$DEPLOYER_DIR/vendor/bin/dep derafu:deploy:single --site=$1'
+alias site-deploy-locked='$DEPLOYER_DIR/vendor/bin/dep derafu:deploy:single --site=$1 --unlock'
+alias site-clone='git clone $2 $SITES_DIR/$1 && site-add $1 $2 && site $1 && site-dependencies && site-build'
+alias site-create='cd $SITES_DIR && composer create-project derafu/website $1 --stability=dev && site $1 && site-dependencies && site-build && git init'
+alias site-add='$DEPLOYER_DIR/bin/siteadd.sh $1 $2'
+
+# Welcome message and useful commands.
+function welcome() {
+    echo "\n🚀 Welcome to the PHP and Caddy Docker container 🚀\n"
+    echo "Useful commands for sites already added:"
+    echo "  - First, enter to a site: site www.example.com"
+    echo "  - Install dependencies: site-dependencies"
+    echo "  - Build assets: site-build"
+    echo "  - Check code: site-check"
+    echo "  - Git status: site-status"
+    echo "  - Update local: site-update"
+    echo "  - Send to remote: site-send \"Commit message.\""
+    echo "  - Deploy: site-deploy www.example.com"
+    echo "  - Deploy if locked: site-deploy-locked www.example.com"
+    echo "\nFor cloning an existing site use:"
+    echo "  site-clone www.example.com git@github.com:example/example.git"
+    echo "Where www.example.com is the domain name and git@github.com:example/example.git is the repository URI."
+    echo "\nFor creating a new site use:"
+    echo "  site-create www.example.com"
+    echo "After creating the site you need to configure git and then run:"
+    echo "  site-add www.example.com git@github.com:example/example.git"
+    echo "\nIf you need help, please contact the administrator."
+    echo "If you are the administrator open an issue on GitHub.\n"
+}
+
+# Show the welcome message.
+welcome()

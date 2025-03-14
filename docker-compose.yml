@@ -18,8 +18,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        ADMIN_USER: ${ADMIN_USER:-admin}
-        ADMIN_GROUP: ${ADMIN_GROUP:-admin}
+        WWW_USER: ${ADMIN_USER:-admin}
+        WWW_GROUP: ${ADMIN_GROUP:-www-data}
         WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
 
     # Name of the container.
@@ -34,6 +34,7 @@ services:
       CADDY_LOG_KEEP_DAYS: ${CADDY_LOG_KEEP_DAYS:-14}
       CADDY_HTTPS_ISSUER: ${CADDY_HTTPS_ISSUER:-internal}
       WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
+      DEPLOYER_HOST: ${DEPLOYER_HOST:-}
 
     # Restart the container unless stopped.
     restart: unless-stopped
@@ -47,3 +48,4 @@ services:
     # Volumes.
     volumes:
       - ${VOLUME_SITES:-./sites}:${WWW_ROOT_PATH:-/var/www/sites}
+      - ${VOLUME_DEPLOYER:-./deployer}:${DEPLOYER_DIR:-/home/admin/deployer}

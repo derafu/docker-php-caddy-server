@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     lsb-release \
+    nano \
     nodejs \
     npm \
     openssh-server \
@@ -109,10 +110,26 @@ RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
 # Create necessary directories for web content and give admin user access.
 RUN mkdir -p ${WWW_ROOT_PATH} \
     && chown -R ${WWW_USER}:${WWW_GROUP} ${WWW_ROOT_PATH} \
-    && chmod 770 ${WWW_ROOT_PATH} -R
+    && chmod 770 ${WWW_ROOT_PATH} -R \
+    && ln -s ${WWW_ROOT_PATH} /home/${WWW_USER}/sites
+
+# Add configuration to .bashrc of the user.
+COPY config/bash/bashrc /root/add-to-bashrc
+RUN cat /root/add-to-bashrc >> /home/${WWW_USER}/.bashrc \
+    && rm -f /root/add-to-bashrc
+
+# Clone and install Deployer.
+RUN git clone https://github.com/derafu/deployer.git /home/${WWW_USER}/deployer \
+    && cd /home/${WWW_USER}/deployer \
+    && composer install \
+    && chown -R ${WWW_USER}: /home/${WWW_USER}/deployer
 
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Environment variables.
+ENV EDITOR=vim
+ENV VISUAL=vim
 
 # Expose ports.
 EXPOSE 80 443 22 9123
