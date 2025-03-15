@@ -18,6 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        CADDY_DEBUG: ${CADDY_DEBUG:-}
         WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
         WWW_USER: ${WWW_USER:-admin}
         WWW_GROUP: ${WWW_GROUP:-www-data}

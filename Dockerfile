@@ -1,13 +1,20 @@
 # Base image.
 FROM php:8.3-fpm
 
-# Environment variables.
+# Arguments.
+ARG CADDY_DEBUG=
 ARG WWW_ROOT_PATH=/var/www/sites
 ARG WWW_USER=admin
 ARG WWW_GROUP=www-data
 
-# Install basic dependencies.
-RUN apt-get update && apt-get install -y \
+# Expose ports.
+EXPOSE 22 80 443 9090
+
+# Run a lot of commands :)
+RUN \
+    \
+    # Install basic dependencies.
+    apt-get update && apt-get install -y --no-install-recommends \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -29,8 +36,6 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     lsb-release \
     nano \
-    nodejs \
-    npm \
     openssh-server \
     rsync \
     screen \
@@ -40,21 +45,24 @@ RUN apt-get update && apt-get install -y \
     vim \
     zip \
     zlib1g-dev \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install D2 CLI.
-RUN curl -fsSL https://d2lang.com/install.sh | sh -s -- --prefix /usr/local
-
-# Install Caddy.
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
+    \
+    # Install Node.js.
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/* \
+    \
+    # Install D2 CLI.
+    && curl -fsSL https://d2lang.com/install.sh | sh -s -- --prefix /usr/local \
+    \
+    # Install Caddy.
+    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
     && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list \
     && apt-get update \
-    && apt-get install -y caddy \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions.
-RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+    && apt-get install -y --no-install-recommends caddy \
+    && rm -rf /var/lib/apt/lists/* \
+    \
+    # Install PHP extensions.
+    && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
     && docker-php-ext-install -j$(nproc) \
         bcmath \
         exif \
@@ -69,37 +77,22 @@ RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/i
         sockets \
         xml \
         zip \
-        && pecl install redis && docker-php-ext-enable redis
-
-# Install and configure Xdebug.
-RUN pecl install xdebug \
+        && pecl install redis && docker-php-ext-enable redis \
+    \
+    # Install and configure Xdebug.
+    && pecl install xdebug \
     && docker-php-ext-enable xdebug \
     && mkdir -p /var/log/xdebug \
-    && chmod 777 /var/log/xdebug
-
-# Configure PHP.
-RUN mkdir -p /var/run/php && chown www-data:www-data /var/run/php
-COPY config/php/php.ini /usr/local/etc/php/php.ini
-
-# Copy Xdebug configuration.
-COPY config/php/xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-
-# Configure PHP-FPM to listen on a socket.
-COPY config/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
-
-# Install Composer.
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Configure Caddy.
-RUN mkdir -p /etc/caddy/sites.d
-COPY config/caddy/Caddyfile /etc/caddy/Caddyfile
-
-# Configure SSH.
-RUN mkdir -p /var/run/sshd
-COPY config/ssh/sshd_config /etc/ssh/sshd_config
-
-# Create admin user for SSH access.
-RUN useradd -m -d /home/${WWW_USER} -s /bin/bash ${WWW_USER} \
+    && chmod 777 /var/log/xdebug \
+    \
+    # Create PHP socket directory.
+    && mkdir -p /var/run/php && chown www-data:www-data /var/run/php \
+    \
+    # Create SSH directory.
+    && mkdir -p /var/run/sshd \
+    \
+    # Create admin user for SSH access.
+    && useradd -m -d /home/${WWW_USER} -s /bin/bash ${WWW_USER} \
     && usermod -p '*' ${WWW_USER} \
     && echo "${WWW_USER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
     && chmod 0440 /etc/sudoers \
@@ -108,29 +101,44 @@ RUN useradd -m -d /home/${WWW_USER} -s /bin/bash ${WWW_USER} \
     && chmod 700 /home/${WWW_USER}/.ssh \
     && ssh-keyscan -t rsa github.com >> /home/${WWW_USER}/.ssh/known_hosts \
     && chmod 600 /home/${WWW_USER}/.ssh/known_hosts \
-    && chown ${WWW_USER}: /home/${WWW_USER}/.ssh/known_hosts
-
-# Copy authorized keys for admin user.
-COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
-RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
-    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh
-
-# Create necessary directories for web content and give admin user access.
-RUN mkdir -p ${WWW_ROOT_PATH} \
+    && chown ${WWW_USER}: /home/${WWW_USER}/.ssh/known_hosts \
+    \
+    # Create necessary directories for web content and give admin user access.
+    && mkdir -p ${WWW_ROOT_PATH} \
     && chown -R ${WWW_USER}:${WWW_GROUP} ${WWW_ROOT_PATH} \
     && chmod 770 ${WWW_ROOT_PATH} -R \
     && ln -s ${WWW_ROOT_PATH} /home/${WWW_USER}/sites
+
+# Copy authorized keys for the user.
+COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
+RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
+    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh
 
 # Add configuration to .bashrc of the user.
 COPY config/bash/bashrc /root/add-to-bashrc
 RUN cat /root/add-to-bashrc >> /home/${WWW_USER}/.bashrc \
     && rm -f /root/add-to-bashrc
 
+# Configure PHP.
+COPY config/php/php.ini /usr/local/etc/php/php.ini
+COPY config/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY config/php/xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+RUN if [ -n "${CADDY_DEBUG}" ]; then \
+        sed -i 's/^;zend_extension=xdebug.so/zend_extension=xdebug.so/' /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+        sed -i 's/^xdebug.mode = off/xdebug.mode = debug/' /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+    fi
+
+# Install Composer.
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configure Caddy.
+COPY config/caddy/Caddyfile /etc/caddy/Caddyfile
+
+# Configure SSH.
+COPY config/ssh/sshd_config /etc/ssh/sshd_config
+
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Expose ports.
-EXPOSE 22 80 443 9090
 
 # Use an entrypoint.
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

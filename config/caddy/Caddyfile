@@ -109,11 +109,14 @@
 }
 
 #
-# On-demand TLS endpoint.
+# On-demand TLS endpoint and Webhook Handler.
 #
 # This endpoint is used to check if a domain is available for TLS.
 # It will return a 200 status if the domain is available, otherwise it will
 # return a 404 status.
+#
+# Also is used to handle webhooks sent to the server. The webhook is processed
+# by the {$WWW_ROOT_PATH}/.admin/webhook.php file.
 #
 :9090 {
     # Handle TLS ask.
