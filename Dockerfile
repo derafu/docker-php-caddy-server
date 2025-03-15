@@ -126,18 +126,6 @@ COPY config/bash/bashrc /root/add-to-bashrc
 RUN cat /root/add-to-bashrc >> /home/${WWW_USER}/.bashrc \
     && rm -f /root/add-to-bashrc
 
-# Clone and install Deployer.
-RUN if [ -z "$(ls -A /home/${WWW_USER}/deployer | grep -v .empty)" ]; then \
-        rm -f /home/${WWW_USER}/deployer/.empty \
-        && git clone https://github.com/derafu/deployer.git /home/${WWW_USER}/deployer; \
-    else \
-        cd /home/${WWW_USER}/deployer \
-        && git pull; \
-    fi \
-    && cd /home/${WWW_USER}/deployer \
-    && composer install \
-    && chown -R ${WWW_USER}: /home/${WWW_USER}/deployer
-
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
