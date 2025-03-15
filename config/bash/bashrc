@@ -103,8 +103,8 @@ site-list() {
     ")
 
     # Header of the table.
-    printf "%-30s %-40s %-10s %-10s %-10s\n" "DOMAIN" "REPOSITORY" "MATCH" "DIRTY" "PULL"
-    printf "%-30s %-40s %-10s %-10s %-10s\n" "------------------------------" "----------------------------------------" "--------" "--------" "--------"
+    printf "%-30s %-50s %-5s %-5s %-5s\n" "DOMAIN" "REPOSITORY" "MATCH" "DIRTY" "PULL"
+    printf "%-30s %-50s %-5s %-5s %-5s\n" "------------------------------" "--------------------------------------------------" "-----" "-----" "----"
 
     # Iterate over each site.
     for site in "${sites[@]}"; do
@@ -173,7 +173,7 @@ site-add() {
         echo "Usage: site-add <domain> <git-repo-url>"
         return 1
     fi
-    "$DEPLOYER_DIR/bin/siteadd.sh" "$1" "$2"
+    "$DEPLOYER_DIR/site-add.sh" "$1" "$2"
 }
 
 
