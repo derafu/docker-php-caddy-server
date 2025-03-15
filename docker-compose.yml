@@ -40,6 +40,7 @@ services:
       DEPLOYER_HOST: ${DEPLOYER_HOST:-}
       EDITOR: ${EDITOR:-vim}
       VISUAL: ${VISUAL:-vim}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
 
     # Restart the container unless stopped.
     restart: unless-stopped
