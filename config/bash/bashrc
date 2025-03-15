@@ -103,8 +103,8 @@ site-list() {
     ")
 
     # Header of the table.
-    printf "%-30s %-50s %-5s %-5s %-5s\n" "DOMAIN" "REPOSITORY" "MATCH" "DIRTY" "PULL"
-    printf "%-30s %-50s %-5s %-5s %-5s\n" "------------------------------" "--------------------------------------------------" "-----" "-----" "----"
+    printf "%-30s %-50s %-5s %-5s %-4s\n" "DOMAIN" "REPOSITORY" "MATCH" "DIRTY" "PULL"
+    printf "%-30s %-50s %-5s %-5s %-4s\n" "------------------------------" "--------------------------------------------------" "-----" "-----" "----"
 
     # Iterate over each site.
     for site in "${sites[@]}"; do
@@ -139,7 +139,7 @@ site-list() {
         fi
 
         # Show results.
-        printf "%-30s %-40s %-10s %-10s %-10s\n" "$site" "${repo_config:-N/A}" "$match" "$dirty" "$pull"
+        printf "%-30s %-50s %-5s %-5s %-4s\n" "$site" "${repo_config:-N/A}" "$match" "$dirty" "$pull"
     done
 }
 
