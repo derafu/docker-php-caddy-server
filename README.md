@@ -192,21 +192,21 @@ docker-compose -f docker-compose.yml up -d
 
 Customize behavior through environment variables:
 
-| Variable              | Description                    | Default             |
-|-----------------------|--------------------------------|---------------------|
-| `SERVER_NAME`         | Name for the docker container  | derafu-sites-server |
-| `CADDY_DEBUG`         | Enable debug mode with `debug` | (empty)             |
-| `CADDY_EMAIL`         | Email for Let's Encrypt        | admin@example.com   |
-| `CADDY_HTTPS_ISSUER`  | TLS issuer (internal, acme)    | internal            |
-| `CADDY_LOG_SIZE`      | Log file max size              | 100mb               |
-| `CADDY_LOG_KEEP`      | Number of log files to keep    | 5                   |
-| `CADDY_LOG_KEEP_DAYS` | Days to keep logs              | 14                  |
-| `WWW_ROOT_PATH`       | Web root path                  | /var/www/sites      |
-| `HTTP_PORT`           | HTTP port in host              | 8080                |
-| `HTTPS_PORT`          | HTTPS port in host             | 8443                |
-| `SSH_PORT`            | SSH port in host               | 2222                |
-| `ADMIN_USER`          | SSH user in the container      | admin               |
-| `ADMIN_GROUP`         | SSH group in the container     | admin               |
+| Variable              | Description                       | Default             |
+|-----------------------|-----------------------------------|---------------------|
+| `SERVER_NAME`         | Name for the docker container     | derafu-sites-server |
+| `CADDY_DEBUG`         | Enable debug mode with `debug`    | (empty)             |
+| `CADDY_EMAIL`         | Email for Let's Encrypt           | admin@example.com   |
+| `CADDY_HTTPS_ISSUER`  | TLS issuer (internal, acme)       | internal            |
+| `CADDY_LOG_SIZE`      | Log file max size                 | 100mb               |
+| `CADDY_LOG_KEEP`      | Number of log files to keep       | 5                   |
+| `CADDY_LOG_KEEP_DAYS` | Days to keep logs                 | 14                  |
+| `WWW_ROOT_PATH`       | Web root path                     | /var/www/sites      |
+| `WWW_USER`            | WWW and SSH user in the container | admin               |
+| `WWW_GROUP`           | WWW group in the container        | www-data            |
+| `HTTP_PORT`           | HTTP port in host                 | 8080                |
+| `HTTPS_PORT`          | HTTPS port in host                | 8443                |
+| `SSH_PORT`            | SSH port in host                  | 2222                |
 
 ## Domain Logic
 

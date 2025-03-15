@@ -18,9 +18,9 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        WWW_USER: ${ADMIN_USER:-admin}
-        WWW_GROUP: ${ADMIN_GROUP:-www-data}
         WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
+        WWW_USER: ${WWW_USER:-admin}
+        WWW_GROUP: ${WWW_GROUP:-www-data}
 
     # Name of the container.
     container_name: ${SERVER_NAME:-derafu-sites-server}-php-caddy
@@ -34,7 +34,12 @@ services:
       CADDY_LOG_KEEP_DAYS: ${CADDY_LOG_KEEP_DAYS:-14}
       CADDY_HTTPS_ISSUER: ${CADDY_HTTPS_ISSUER:-internal}
       WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
+      WWW_USER: ${WWW_USER:-admin}
+      SITES_DIR: ${SITES_DIR:-/home/admin/sites}
+      DEPLOYER_DIR: ${DEPLOYER_DIR:-/home/admin/deployer}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-}
+      EDITOR: ${EDITOR:-vim}
+      VISUAL: ${VISUAL:-vim}
 
     # Restart the container unless stopped.
     restart: unless-stopped
@@ -44,6 +49,7 @@ services:
       - "${HTTP_PORT:-8080}:80"
       - "${HTTPS_PORT:-8443}:443"
       - "${SSH_PORT:-2222}:22"
+      - "${MANAGER_PORT:-9090}:9090"
 
     # Volumes.
     volumes:

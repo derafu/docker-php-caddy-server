@@ -2,9 +2,9 @@
 FROM php:8.3-fpm
 
 # Environment variables.
+ARG WWW_ROOT_PATH=/var/www/sites
 ARG WWW_USER=admin
 ARG WWW_GROUP=www-data
-ARG WWW_ROOT_PATH=/var/www/sites
 
 # Install basic dependencies.
 RUN apt-get update && apt-get install -y \
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     git \
     gnupg \
+    jq \
     libfreetype6-dev \
     libgd-dev \
     libicu-dev \
@@ -76,14 +77,18 @@ RUN pecl install xdebug \
     && mkdir -p /var/log/xdebug \
     && chmod 777 /var/log/xdebug
 
+# Configure PHP.
+RUN mkdir -p /var/run/php && chown www-data:www-data /var/run/php
+COPY config/php/php.ini /usr/local/etc/php/php.ini
+
 # Copy Xdebug configuration.
 COPY config/php/xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
+# Configure PHP-FPM to listen on a socket.
+COPY config/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+
 # Install Composer.
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Configure PHP.
-COPY config/php/php.ini /usr/local/etc/php/php.ini
 
 # Configure Caddy.
 RUN mkdir -p /etc/caddy/sites.d
@@ -100,7 +105,10 @@ RUN useradd -m -d /home/${WWW_USER} -s /bin/bash ${WWW_USER} \
     && chmod 0440 /etc/sudoers \
     && chmod g+w /etc/passwd \
     && mkdir -p /home/${WWW_USER}/.ssh \
-    && chmod 700 /home/${WWW_USER}/.ssh
+    && chmod 700 /home/${WWW_USER}/.ssh \
+    && ssh-keyscan -t rsa github.com >> /home/${WWW_USER}/.ssh/known_hosts \
+    && chmod 600 /home/${WWW_USER}/.ssh/known_hosts \
+    && chown ${WWW_USER}: /home/${WWW_USER}/.ssh/known_hosts
 
 # Copy authorized keys for admin user.
 COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
@@ -119,7 +127,13 @@ RUN cat /root/add-to-bashrc >> /home/${WWW_USER}/.bashrc \
     && rm -f /root/add-to-bashrc
 
 # Clone and install Deployer.
-RUN git clone https://github.com/derafu/deployer.git /home/${WWW_USER}/deployer \
+RUN if [ -z "$(ls -A /home/${WWW_USER}/deployer | grep -v .empty)" ]; then \
+        rm -f /home/${WWW_USER}/deployer/.empty \
+        && git clone https://github.com/derafu/deployer.git /home/${WWW_USER}/deployer; \
+    else \
+        cd /home/${WWW_USER}/deployer \
+        && git pull; \
+    fi \
     && cd /home/${WWW_USER}/deployer \
     && composer install \
     && chown -R ${WWW_USER}: /home/${WWW_USER}/deployer
@@ -127,12 +141,13 @@ RUN git clone https://github.com/derafu/deployer.git /home/${WWW_USER}/deployer 
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Environment variables.
-ENV EDITOR=vim
-ENV VISUAL=vim
-
 # Expose ports.
-EXPOSE 80 443 22 9123
+EXPOSE 22 80 443 9090
 
-# Start supervisor.
+# Use an entrypoint.
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Start supervisor (default process of the container).
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

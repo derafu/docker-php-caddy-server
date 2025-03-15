@@ -1,46 +1,209 @@
 # Environment variables.
-export SITES_DIR=$HOME/sites
-export DEPLOYER_DIR=$HOME/deployer
+export EDITOR=$(sudo cat /proc/1/environ | tr '\0' '\n' | grep EDITOR | cut -d= -f2)
+export VISUAL=$(sudo cat /proc/1/environ | tr '\0' '\n' | grep VISUAL | cut -d= -f2)
+export SITES_DIR=$(sudo cat /proc/1/environ | tr '\0' '\n' | grep SITES_DIR | cut -d= -f2)
+export DEPLOYER_DIR=$(sudo cat /proc/1/environ | tr '\0' '\n' | grep DEPLOYER_DIR | cut -d= -f2)
+export DEPLOYER_HOST=$(sudo cat /proc/1/environ | tr '\0' '\n' | grep DEPLOYER_HOST | cut -d= -f2)
 
 # Usefull aliases.
 alias ll='ls -lah'
 alias ..='cd ..'
-alias site='cd $SITES_DIR/$1'
-alias site-dependencies='composer install && npm install'
-alias site-build='npm run build'
-alias site-check='composer phpcs && composer phpstan && composer tests'
-alias site-status='git status'
-alias site-update='git pull && site-dependencies && site-build'
-alias site-send='git add . && git commit -m "$1" && git push'
-alias site-deploy='$DEPLOYER_DIR/vendor/bin/dep derafu:deploy:single --site=$1'
-alias site-deploy-locked='$DEPLOYER_DIR/vendor/bin/dep derafu:deploy:single --site=$1 --unlock'
-alias site-clone='git clone $2 $SITES_DIR/$1 && site-add $1 $2 && site $1 && site-dependencies && site-build'
-alias site-create='cd $SITES_DIR && composer create-project derafu/website $1 --stability=dev && site $1 && site-dependencies && site-build && git init'
-alias site-add='$DEPLOYER_DIR/bin/siteadd.sh $1 $2'
+alias caddy-restart='sudo supervisorctl restart caddy'
+alias php-restart='sudo supervisorctl restart php-fpm'
 
-# Welcome message and useful commands.
-function welcome() {
-    echo "\n🚀 Welcome to the PHP and Caddy Docker container 🚀\n"
-    echo "Useful commands for sites already added:"
-    echo "  - First, enter to a site: site www.example.com"
-    echo "  - Install dependencies: site-dependencies"
-    echo "  - Build assets: site-build"
-    echo "  - Check code: site-check"
-    echo "  - Git status: site-status"
-    echo "  - Update local: site-update"
-    echo "  - Send to remote: site-send \"Commit message.\""
-    echo "  - Deploy: site-deploy www.example.com"
-    echo "  - Deploy if locked: site-deploy-locked www.example.com"
-    echo "\nFor cloning an existing site use:"
-    echo "  site-clone www.example.com git@github.com:example/example.git"
-    echo "Where www.example.com is the domain name and git@github.com:example/example.git is the repository URI."
-    echo "\nFor creating a new site use:"
-    echo "  site-create www.example.com"
-    echo "After creating the site you need to configure git and then run:"
-    echo "  site-add www.example.com git@github.com:example/example.git"
-    echo "\nIf you need help, please contact the administrator."
-    echo "If you are the administrator open an issue on GitHub.\n"
+# Usefull functions.
+site() {
+    if [ -z "$1" ]; then
+        echo "Usage: site <domain>"
+        return 1
+    fi
+    cd "$SITES_DIR/$1" || echo "Error: Directory $SITES_DIR/$1 not found."
 }
 
-# Show the welcome message.
-welcome()
+site-dependencies() {
+    composer install && \
+    npm install
+}
+
+site-build() {
+    npm run build
+}
+
+site-clean() {
+    if [ -z "$1" ]; then
+        echo "Usage: site-clean <domain>"
+        return 1
+    fi
+    rm -rf "$SITES_DIR/$1/public/static" "$SITES_DIR/$1/var"
+}
+
+site-check() {
+    composer phpcs && \
+    composer phpstan && \
+    composer tests
+}
+
+site-status() {
+    git status
+}
+
+site-update() {
+    git pull && \
+    site-dependencies && \
+    site-build
+}
+
+site-send() {
+    if [ -z "$1" ]; then
+        echo "Usage: site-send \"<commit message>\""
+        return 1
+    fi
+    git add . && \
+    git commit -m "$1" && \
+    git push
+}
+
+site-deploy() {
+    if [ -z "$1" ]; then
+        echo "Usage: site-deploy <domain>"
+        return 1
+    fi
+    "$DEPLOYER_DIR/vendor/bin/dep" derafu:deploy:single --site="$1"
+}
+
+site-deploy-locked() {
+    if [ -z "$1" ]; then
+        echo "Usage: site-deploy-locked <domain>"
+        return 1
+    fi
+    "$DEPLOYER_DIR/vendor/bin/dep" derafu:deploy:single --site="$1" --unlock
+}
+
+site-list() {
+    if [ ! -d "$SITES_DIR" ]; then
+        echo "Error: SITES_DIR ($SITES_DIR) does not exist."
+        return 1
+    fi
+
+    echo -e "\nChecking sites in $SITES_DIR...\n"
+
+    # Get list of folders (sites).
+    sites=($(ls -d "$SITES_DIR"/*/ 2>/dev/null | xargs -n 1 basename | sort))
+
+    # If no sites, exit.
+    if [ ${#sites[@]} -eq 0 ]; then
+        echo "No sites found in $SITES_DIR."
+        return 0
+    fi
+
+    # Get sites configuration from PHP.
+    site_config=$(php -r "
+        \$sites = include '$DEPLOYER_DIR/sites.php';
+        echo json_encode(\$sites, JSON_PRETTY_PRINT);
+    ")
+
+    # Header of the table.
+    printf "%-30s %-40s %-10s %-10s %-10s\n" "DOMAIN" "REPOSITORY" "MATCH" "DIRTY" "PULL"
+    printf "%-30s %-40s %-10s %-10s %-10s\n" "------------------------------" "----------------------------------------" "--------" "--------" "--------"
+
+    # Iterate over each site.
+    for site in "${sites[@]}"; do
+        site_path="$SITES_DIR/$site"
+        repo_local=""
+        repo_config=""
+        match="NO"
+        dirty="NO"
+        pull="NO"
+
+        # Extract the repository from the PHP file.
+        repo_config=$(
+            echo "$site_config" \
+            | jq -r --arg site "$site" '.[$site] | if type=="string" then . else .repository end' \
+            | grep -v null || echo "N/A" \
+        )
+
+        # If it is a Git repository, get the remote URL.
+        if [ -d "$site_path/.git" ]; then
+            repo_local=$(git -C "$site_path" remote get-url origin 2>/dev/null || echo "Unknown")
+
+            # Compare repositories.
+            [ "$repo_local" == "$repo_config" ] && match="YES"
+
+            # Check if the repository is dirty.
+            [ -n "$(git -C "$site_path" status --porcelain)" ] && dirty="YES"
+
+            # Check if there are pending remote changes.
+            git -C "$site_path" fetch -q
+            count=$(git -C "$site_path" rev-list HEAD...origin --count 2>/dev/null || echo "0")
+            [ "$count" -gt 0 ] && pull="YES"
+        fi
+
+        # Show results.
+        printf "%-30s %-40s %-10s %-10s %-10s\n" "$site" "${repo_config:-N/A}" "$match" "$dirty" "$pull"
+    done
+}
+
+site-clone() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: site-clone <domain> <git-repo-url>"
+        return 1
+    fi
+    git clone "$2" "$SITES_DIR/$1" && \
+    site-add "$1" "$2" && \
+    site "$1" && \
+    site-dependencies && \
+    site-build
+}
+
+site-create() {
+    if [ -z "$1" ]; then
+        echo "Usage: site-create <domain>"
+        return 1
+    fi
+    cd "$SITES_DIR" && \
+    composer create-project derafu/website "$1" --stability=dev && \
+    site "$1" && \
+    site-dependencies && \
+    site-build && \
+    git init
+}
+
+site-add() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: site-add <domain> <git-repo-url>"
+        return 1
+    fi
+    "$DEPLOYER_DIR/bin/siteadd.sh" "$1" "$2"
+}
+
+
+# Welcome message and useful commands.
+site-help() {
+    echo -e "\n🚀 Welcome to the PHP and Caddy Docker container 🚀\n"
+    echo -e "Useful commands for sites already added:"
+    echo -e "  - First, enter to a site: site www.example.com"
+    echo -e "  - Install dependencies: site-dependencies"
+    echo -e "  - Build assets: site-build"
+    echo -e "  - Check code: site-check"
+    echo -e "  - Clean cache and temporary files: site-clean www.example.com"
+    echo -e "  - Git status: site-status"
+    echo -e "  - Update local: site-update"
+    echo -e "  - Send to remote: site-send \"Commit message.\""
+    echo -e "  - Deploy: site-deploy www.example.com"
+    echo -e "  - Deploy if locked: site-deploy-locked www.example.com"
+    echo -e "\nFor cloning an existing site use:"
+    echo -e "  site-clone www.example.com git@github.com:example/example.git"
+    echo -e "\nFor creating a new site use:"
+    echo -e "  site-create www.example.com"
+    echo -e "\nAfter creating the site you need to configure git and then run:"
+    echo -e "  site-add www.example.com git@github.com:example/example.git"
+    echo -e "\nConfigured environment variables:"
+    echo -e "  SITES_DIR: $SITES_DIR"
+    echo -e "  DEPLOYER_DIR: $DEPLOYER_DIR"
+    echo -e "  DEPLOYER_HOST: $DEPLOYER_HOST"
+    echo -e "\nIf you need help, please contact the administrator."
+    echo -e "If you are the administrator open an issue on GitHub.\n"
+}
+
+# Show the sites help when the user enters the container.
+site-help
