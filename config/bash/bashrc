@@ -210,7 +210,7 @@ site-help() {
     echo -e "  site-check                      # Run PHPCS, PHPStan and PHPUnit"
     echo -e "  site-status                     # Show the Git status"
     echo -e "  site-update                     # Pull latest changes and rebuild"
-    echo -e "  site-send \"<commit message>\"  # Add, commit and push all changes"
+    echo -e "  site-send \"<commit message>\"    # Add, commit and push all changes"
 
     echo -e "\nDeployment Commands:"
     echo -e "  site-deploy <domain>            # Deploy the site using Deployer"
