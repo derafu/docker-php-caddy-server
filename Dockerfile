@@ -124,6 +124,10 @@ COPY config/php/php.ini /usr/local/etc/php/php.ini
 COPY config/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 COPY config/php/xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 RUN if [ -n "${CADDY_DEBUG}" ]; then \
+        # Disable OPCache by default in development mode.
+        sed -i 's/^opcache.enable = 1/opcache.enable = 0/' /usr/local/etc/php/php.ini; \
+        sed -i 's/^opcache.enable_cli = 1/opcache.enable_cli = 0/' /usr/local/etc/php/php.ini; \
+        # Enable Xdebug by default in development mode with debug mode.
         sed -i 's/^;zend_extension=xdebug.so/zend_extension=xdebug.so/' /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
         sed -i 's/^xdebug.mode = off/xdebug.mode = debug/' /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
     fi
