@@ -6,6 +6,7 @@ ARG CADDY_DEBUG=
 ARG WWW_ROOT_PATH=/var/www/sites
 ARG WWW_USER=admin
 ARG WWW_GROUP=www-data
+ARG DEPLOYER_HOST=
 
 # Expose ports.
 EXPOSE 22 80 443 9090
@@ -120,6 +121,7 @@ RUN \
     # Add SSH known hosts.
     && mkdir -p /etc/ssh \
     && ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts \
+    && [ -n "${DEPLOYER_HOST}" ] && ssh-keyscan "${DEPLOYER_HOST}" >> /etc/ssh/ssh_known_hosts \
     && chmod 644 /etc/ssh/ssh_known_hosts \
     \
     # Create deployer log file with correct permissions (or task cannot be executed).

@@ -26,6 +26,7 @@ services:
         WWW_ROOT_PATH: ${WWW_ROOT_PATH:-/var/www/sites}
         WWW_USER: ${WWW_USER:-admin}
         WWW_GROUP: ${WWW_GROUP:-www-data}
+        DEPLOYER_HOST: ${DEPLOYER_HOST:-}
 
     # Name of the container.
     container_name: ${SERVER_NAME:-derafu-sites-server}-php-caddy
