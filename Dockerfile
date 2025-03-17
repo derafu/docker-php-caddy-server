@@ -120,7 +120,11 @@ RUN \
     # Add SSH known hosts.
     && mkdir -p /etc/ssh \
     && ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts \
-    && chmod 644 /etc/ssh/ssh_known_hosts
+    && chmod 644 /etc/ssh/ssh_known_hosts \
+    \
+    # Create deployer log file with correct permissions (or task cannot be executed).
+    && touch /var/log/deployer.log \
+    && chmod 666 /var/log/deployer.log
 
 # Copy authorized keys for the user.
 COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
