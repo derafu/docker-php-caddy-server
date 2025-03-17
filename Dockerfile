@@ -16,7 +16,9 @@ RUN \
     # Install basic dependencies.
     apt-get update && apt-get install -y --no-install-recommends \
     apt-transport-https \
+    at \
     ca-certificates \
+    cron \
     curl \
     debian-archive-keyring \
     debian-keyring \
@@ -34,6 +36,7 @@ RUN \
     libsqlite3-dev \
     libxml2-dev \
     libzip-dev \
+    logrotate \
     lsb-release \
     nano \
     openssh-server \
@@ -140,6 +143,12 @@ COPY config/caddy/Caddyfile /etc/caddy/Caddyfile
 
 # Configure SSH.
 COPY config/ssh/sshd_config /etc/ssh/sshd_config
+
+# Configure Logrotate.
+COPY config/logrotate/deployer /etc/logrotate.d/deployer
+
+# Configure Cron.
+COPY config/cron/logrotate /etc/cron.d/logrotate
 
 # Configure Supervisor.
 COPY config/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

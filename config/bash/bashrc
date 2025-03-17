@@ -81,7 +81,7 @@ site-deploy() {
         echo "Usage: site-deploy <domain>"
         return 1
     fi
-    "$DEPLOYER_DIR/vendor/bin/dep" derafu:deploy:single --site="$1"
+    "$DEPLOYER_DIR/vendor/bin/dep" -f "$DEPLOYER_DIR/deploy.php" derafu:deploy:single --site="$1"
 }
 complete -F _sites_autocomplete_from_php site-deploy
 
@@ -90,7 +90,7 @@ site-deploy-locked() {
         echo "Usage: site-deploy-locked <domain>"
         return 1
     fi
-    "$DEPLOYER_DIR/vendor/bin/dep" derafu:deploy:single --site="$1" --unlock
+    "$DEPLOYER_DIR/vendor/bin/dep" -f "$DEPLOYER_DIR/deploy.php" derafu:deploy:single --site="$1" --unlock
 }
 complete -F _sites_autocomplete_from_php site-deploy-locked
 
