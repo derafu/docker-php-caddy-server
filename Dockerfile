@@ -38,6 +38,7 @@ RUN \
     libzip-dev \
     logrotate \
     lsb-release \
+    mutt \
     nano \
     openssh-server \
     rsync \
@@ -110,12 +111,29 @@ RUN \
     && mkdir -p ${WWW_ROOT_PATH} \
     && chown -R ${WWW_USER}:${WWW_GROUP} ${WWW_ROOT_PATH} \
     && chmod 770 ${WWW_ROOT_PATH} -R \
-    && ln -s ${WWW_ROOT_PATH} /home/${WWW_USER}/sites
+    && ln -s ${WWW_ROOT_PATH} /home/${WWW_USER}/sites \
+    \
+    # Allow www-data and ${WWW_USER} users to add jobs to the at queue.
+    && echo "www-data" >> /etc/at.allow \
+    && echo "${WWW_USER}" >> /etc/at.allow \
+    \
+    # Add SSH known hosts.
+    && mkdir -p /etc/ssh \
+    && ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts \
+    && chmod 644 /etc/ssh/ssh_known_hosts
 
 # Copy authorized keys for the user.
 COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
 RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
-    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh
+    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh \
+    \
+    # Add SSH key for www-data user.
+    && mkdir -p /var/www/.ssh \
+    && ssh-keygen -t rsa -b 4096 -N "" -C "www-data@localhost" -f /var/www/.ssh/id_rsa -q \
+    && cat /var/www/.ssh/id_rsa.pub >> /home/${WWW_USER}/.ssh/authorized_keys \
+    && chown -R www-data:www-data /var/www/.ssh \
+    && chmod 700 /var/www/.ssh \
+    && chmod 600 /var/www/.ssh/id_rsa
 
 # Add configuration to .bashrc of the user.
 COPY config/bash/bashrc /root/add-to-bashrc

@@ -20,6 +20,7 @@ set-container-hostname() {
 
     echo "Setting hostname to: $hostname_value"
     hostname "$hostname_value"
+    echo "127.0.0.1 $hostname_value" >> /etc/hosts
 }
 
 # Function to install or update Deployer.
