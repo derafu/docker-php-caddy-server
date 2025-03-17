@@ -121,7 +121,7 @@ RUN \
     # Add SSH known hosts.
     && mkdir -p /etc/ssh \
     && ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts \
-    && [ -n "${DEPLOYER_HOST}" ] && ssh-keyscan "${DEPLOYER_HOST}" >> /etc/ssh/ssh_known_hosts \
+    && ( [ -n "${DEPLOYER_HOST}" ] && ssh-keyscan "${DEPLOYER_HOST}" >> /etc/ssh/ssh_known_hosts || true ) \
     && chmod 644 /etc/ssh/ssh_known_hosts \
     \
     # Create deployer log file with correct permissions (or task cannot be executed).
