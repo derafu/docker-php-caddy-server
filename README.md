@@ -15,7 +15,7 @@ A modern Docker setup for hosting PHP websites with Caddy web server and SSH acc
 - **Development Domains**: Test with .local domains that map to production folders.
 - **Automatic WWW Redirection**: For second-level domains (e.g., example.com → www.example.com).
 - **Auto-HTTPS**: Certificates are automatically generated on-demand.
-- **Environment Separation**: Development and production environments managed through Docker Compose override.
+- **Environment Separation**: Development and production environments can be managed through Docker Compose override.
 
 ## Quick Start
 
@@ -80,47 +80,32 @@ For local development, add to your `/etc/hosts` file:
 
 ```
 docker-php-caddy-server/
-├── config/                     # Configuration files.
-│   ├── caddy/                  # Caddy configuration.
-│   ├── php/                    # PHP configuration.
-│   ├── ssh/                    # SSH configuration and authorized keys.
-│   └── supervisor/             # Supervisor configuration.
-├── sites/                      # Web sites directory for local development.
-│   └── www.example.com/        # Example site.
-│       └── public/             # Public web files.
-├── .env                        # Docker Compose environment configuration.
-├── Dockerfile                  # Container definition.
-├── docker-compose.yml          # Docker services configuration (production).
-└── docker-compose.override.yml # Development-specific configuration.
+├── config/                             # Configuration files.
+│   ├── caddy/                          # Caddy configuration.
+│   ├── php/                            # PHP configuration.
+│   ├── ssh/                            # SSH configuration and authorized keys.
+│   └── supervisor/                     # Supervisor configuration.
+├── sites/                              # Web sites directory for local development.
+│   └── www.example.com/                # Example site.
+│       └── public/                     # Public web files.
+├── .env                                # Docker Compose environment configuration.
+├── Dockerfile                          # Container definition.
+├── docker-compose.yml                  # Docker services configuration (production).
+└── docker-compose.override-example.yml # Development-specific configuration.
 ```
 
 ## Development vs Production Environment
 
-This project uses Docker Compose's override functionality to separate development and production configurations:
-
-### Production Environment
-
-The base `docker-compose.yml` contains the minimal configuration needed for production deployment. It:
-
-- Sets up required environment variables.
-- Defines essential ports (HTTP, HTTPS, SSH).
-- Doesn't mount external volumes.
-
-### Development Environment
-
-The `docker-compose.override.yml` file adds development-specific settings:
-
-- Adds additional development ports (e.g., management interface).
-- Mounts local volumes for easy site development.
+This project uses Docker Compose's override functionality to separate different configurations.
 
 ### Usage:
 
-- **Development**: Docker Compose automatically merges both files:
+- **Development**: Rename `docker-compose.override-example.yml` to `docker-compose.override.yml` and then Docker Compose automatically merges both files:
   ```bash
   docker-compose up -d
   ```
 
-- **Production**: Use only the base configuration:
+- **Production**: Use only the base configuration (with `-f` or not creating the `docker-compose.override.yml` file):
   ```bash
   docker-compose -f docker-compose.yml up -d
   ```

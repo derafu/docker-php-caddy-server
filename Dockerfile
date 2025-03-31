@@ -8,9 +8,6 @@ ARG WWW_USER=admin
 ARG WWW_GROUP=www-data
 ARG DEPLOYER_HOST=
 
-# Expose ports.
-EXPOSE 22 80 443 9090
-
 # Run a lot of commands :)
 RUN \
     \

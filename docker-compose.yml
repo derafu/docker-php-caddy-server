@@ -52,13 +52,6 @@ services:
     # Restart the container unless stopped.
     restart: unless-stopped
 
-    # Ports mapping to the host.
-    ports:
-      - "${HTTP_PORT:-8080}:80"
-      - "${HTTPS_PORT:-8443}:443"
-      - "${SSH_PORT:-2222}:22"
-      - "${MANAGER_PORT:-9090}:9090"
-
     # Volumes.
     volumes:
       - ${VOLUME_SITES:-./sites}:${WWW_ROOT_PATH:-/var/www/sites}

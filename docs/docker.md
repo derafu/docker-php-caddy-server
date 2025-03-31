@@ -198,16 +198,16 @@ docker-compose exec service_name command
 docker-compose exec webserver bash
 ```
 
-### Production vs Development Environments
+### Docker Compose Override
 
-In our project, we use Docker Compose's override functionality to separate development and production configurations:
+This project uses Docker Compose's override functionality to separate different configurations:
 
-**Development (uses both docker-compose.yml and docker-compose.override.yml)**
+**Use both docker-compose.yml and docker-compose.override.yml**
 ```bash
 docker-compose up -d
 ```
 
-**Production (uses only docker-compose.yml)**
+**Usesonly docker-compose.yml**
 ```bash
 docker-compose -f docker-compose.yml up -d
 ```
