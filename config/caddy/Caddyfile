@@ -108,7 +108,7 @@
         not host *.local
     }
     handle @production {
-        root * {$WWW_ROOT_PATH}/{host}/current
+        root * {$WWW_ROOT_PATH}/{real_domain}/current
         php_fastcgi unix//var/run/php/php-fpm.sock {
             try_files public/index.php
             resolve_root_symlink
