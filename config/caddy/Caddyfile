@@ -28,9 +28,9 @@
 #
 (normalize_domain) {
     # Remove the .local extension from the domain if exists.
-    map     {query.domain}          {non_local_domain} {
+    map     {domain_input}          {non_local_domain} {
             ~(.*)\.local$           "${1}"
-            default                 "{query.domain}"
+            default                 "{domain_input}"
     }
 
     # Remove environment subdomain (stage, dev, qa, etc) if exists.
@@ -66,6 +66,12 @@
 
 # HTTPS - handle all actual processing.
 :443 {
+    # Normalize the domain to the real domain.
+    map {host} {domain_input} {
+        default "{host}"
+    }
+    import normalize_domain
+
     # Add main logging.
     log {
         output file /var/log/caddy/access.log {
@@ -131,6 +137,9 @@
     # Check if the real domain exists as a directory in the {$WWW_ROOT_PATH}.
     # If the real domain exists, return a 200 status.
     root * {$WWW_ROOT_PATH}
+    map {query.domain} {domain_input} {
+        default "{query.domain}"
+    }
     import normalize_domain
     @ask <<CEL
         path('/api/ask')
