@@ -185,7 +185,6 @@ Customize behavior through environment variables:
 | `CADDY_HTTPS_ISSUER`  | TLS issuer (internal, acme)       | internal            |
 | `CADDY_LOG_SIZE`      | Log file max size                 | 100mb               |
 | `CADDY_LOG_KEEP`      | Number of log files to keep       | 5                   |
-| `CADDY_LOG_KEEP_DAYS` | Days to keep logs                 | 14                  |
 | `WWW_ROOT_PATH`       | Web root path                     | /var/www/sites      |
 | `WWW_USER`            | WWW and SSH user in the container | admin               |
 | `WWW_GROUP`           | WWW group in the container        | www-data            |

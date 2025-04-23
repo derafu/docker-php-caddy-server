@@ -33,6 +33,7 @@ deployer-install() {
         rm -f "$dir/.empty"
         git clone https://github.com/derafu/deployer.git "$dir"
     else
+        git config --global --add safe.directory /home/admin/deployer
         echo "Deployer repository found. Pulling latest changes..."
         if ! git -C "$dir" pull; then
             echo "Warning: Git pull failed. There may be uncommitted changes."

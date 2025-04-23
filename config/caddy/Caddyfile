@@ -57,7 +57,6 @@
         output file /var/log/caddy/http_redirect.log {
             roll_size 10mb
             roll_keep 3
-            roll_keep_days 7
         }
     }
 
@@ -72,7 +71,6 @@
         output file /var/log/caddy/access.log {
             roll_size {$CADDY_LOG_SIZE}
             roll_keep {$CADDY_LOG_KEEP}
-            roll_keep_days {$CADDY_LOG_KEEP_DAYS}
         }
     }
 
