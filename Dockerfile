@@ -125,18 +125,19 @@ RUN \
     && touch /var/log/deployer.log \
     && chmod 666 /var/log/deployer.log
 
-# Copy authorized keys for the user.
-COPY config/ssh/authorized_keys /home/${WWW_USER}/.ssh/authorized_keys
-RUN chmod 600 /home/${WWW_USER}/.ssh/authorized_keys \
-    && chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh \
-    \
+# Configure SSH client (this will include the config form the server, but is not used for SSH access).
+COPY config/ssh/ /home/${WWW_USER}/.ssh/
+RUN chown -R ${WWW_USER}:${WWW_USER} /home/${WWW_USER}/.ssh \
     # Add SSH key for www-data user.
     && mkdir -p /var/www/.ssh \
     && ssh-keygen -t rsa -b 4096 -N "" -C "www-data@localhost" -f /var/www/.ssh/id_rsa -q \
     && cat /var/www/.ssh/id_rsa.pub >> /home/${WWW_USER}/.ssh/authorized_keys \
     && chown -R www-data:www-data /var/www/.ssh \
     && chmod 700 /var/www/.ssh \
-    && chmod 600 /var/www/.ssh/id_rsa
+    && chmod 600 /var/www/.ssh/id_rsa \
+    # Set correct permissions for authorized_keys and id_rsa.
+    && chmod 600 /home/${WWW_USER}/.ssh/authorized_keys || true \
+    && [ -f /home/${WWW_USER}/.ssh/id_rsa ] && chmod 600 /home/${WWW_USER}/.ssh/id_rsa || true
 
 # Add configuration to .bashrc of the user.
 COPY config/bash/bashrc /root/add-to-bashrc
@@ -162,7 +163,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configure Caddy.
 COPY config/caddy/Caddyfile /etc/caddy/Caddyfile
 
-# Configure SSH.
+# Configure SSH server.
 COPY config/ssh/sshd_config /etc/ssh/sshd_config
 
 # Configure Logrotate.
