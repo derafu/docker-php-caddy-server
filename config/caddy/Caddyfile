@@ -118,7 +118,7 @@
     }
 
     # Default response.
-    respond "Domain {host} is not available." 404
+    respond "Domain {domain_input} (Site: {real_domain}) is not available." 404
 }
 
 #
