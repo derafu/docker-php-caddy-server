@@ -37,9 +37,14 @@ site() {
 }
 complete -F _sites_autocomplete_from_dirs site
 
-site-dependencies() {
+site-dependencies-install() {
     composer install && \
     npm install
+}
+
+site-dependencies-update() {
+    composer update && \
+    npm update
 }
 
 site-build() {
@@ -62,7 +67,7 @@ site-status() {
 
 site-update() {
     git pull && \
-    site-dependencies && \
+    site-dependencies-update && \
     site-build
 }
 
@@ -166,7 +171,7 @@ site-clone() {
     git clone "$2" "$SITES_DIR/$1" && \
     site-add "$1" "$2" && \
     site "$1" && \
-    site-dependencies && \
+    site-dependencies-install && \
     site-build
 }
 
@@ -178,7 +183,7 @@ site-create() {
     cd "$SITES_DIR" && \
     composer create-project derafu/website "$1" --stability=dev && \
     site "$1" && \
-    site-dependencies && \
+    site-dependencies-install && \
     site-build && \
     git init
 }
@@ -204,7 +209,8 @@ site-help() {
     echo -e "  site-add <domain> <git-url>     # Add a site to the deployer configuration"
 
     echo -e "\nSite Management Commands (inside the site directory):"
-    echo -e "  site-dependencies               # Install dependencies (Composer & npm)"
+    echo -e "  site-dependencies-install       # Install dependencies (Composer & npm)"
+    echo -e "  site-dependencies-update        # Update dependencies (Composer & npm)"
     echo -e "  site-build                      # Build the site's assets"
     echo -e "  site-clean                      # Remove cached files"
     echo -e "  site-check                      # Run PHPCS, PHPStan and PHPUnit"
