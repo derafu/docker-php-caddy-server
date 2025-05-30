@@ -39,6 +39,11 @@ RUN \
     mutt \
     nano \
     openssh-server \
+    python3 \
+    python3-dev \
+    python3-venv \
+    python3-pip \
+    python3-setuptools \
     rsync \
     screen \
     sudo \
@@ -124,6 +129,15 @@ RUN \
     # Create deployer log file with correct permissions (or task cannot be executed).
     && touch /var/log/deployer.log \
     && chmod 666 /var/log/deployer.log
+
+# Clone and compile phpy (only if all dependencies are available).
+RUN git clone https://github.com/swoole/phpy.git /opt/phpy && \
+    cd /opt/phpy && \
+    phpize && \
+    ./configure && \
+    make && make install && \
+    echo "extension=phpy.so" > /usr/local/etc/php/conf.d/phpy.ini && \
+    rm -rf /opt/phpy
 
 # Configure SSH client (this will include the config form the server, but is not used for SSH access).
 COPY config/ssh/ /home/${WWW_USER}/.ssh/
