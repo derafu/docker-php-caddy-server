@@ -1,5 +1,4 @@
 deployer/
-sites/
 docker-compose.override.yml
 config/ssh/id_rsa
 config/ssh/id_rsa.pub
