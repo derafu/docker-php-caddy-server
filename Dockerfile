@@ -28,6 +28,7 @@ RUN \
     libgd-dev \
     libicu-dev \
     libjpeg62-turbo-dev \
+    libnss3-tools \
     libonig-dev \
     libpng-dev \
     libpq-dev \
